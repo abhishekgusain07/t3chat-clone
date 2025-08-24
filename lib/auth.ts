@@ -39,7 +39,7 @@ export const auth = betterAuth({
       account,
       verification,
       subscription,
-    },
+    }
   }),
   socialProviders: {
     google: {
@@ -188,5 +188,5 @@ export const auth = betterAuth({
       ],
     }),
     nextCookies(),
-  ],
+  ]
 });
