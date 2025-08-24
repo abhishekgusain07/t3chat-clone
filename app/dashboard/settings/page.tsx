@@ -1,197 +1,197 @@
-"use client";
+'use client'
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { authClient } from "@/lib/auth-client";
-import { ExternalLink, Settings2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
-import { toast } from "sonner";
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { authClient } from '@/lib/auth-client'
+import { ExternalLink, Settings2 } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 interface User {
-  id: string;
-  name: string;
-  email: string;
-  image?: string | null;
+  id: string
+  name: string
+  email: string
+  image?: string | null
 }
 
 interface OrderItem {
-  label: string;
-  amount: number;
+  label: string
+  amount: number
 }
 
 interface Order {
-  id: string;
+  id: string
   product?: {
-    name: string;
-  };
-  createdAt: string;
-  totalAmount: number;
-  currency: string;
-  status: string;
+    name: string
+  }
+  createdAt: string
+  totalAmount: number
+  currency: string
+  status: string
   subscription?: {
-    status: string;
-    endedAt?: string;
-  };
-  items: OrderItem[];
+    status: string
+    endedAt?: string
+  }
+  items: OrderItem[]
 }
 
 interface OrdersResponse {
   result: {
-    items: Order[];
-  };
+    items: Order[]
+  }
 }
 
 function SettingsContent() {
-  const [user, setUser] = useState<User | null>(null);
-  const [orders, setOrders] = useState<OrdersResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [currentTab, setCurrentTab] = useState("profile");
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const [user, setUser] = useState<User | null>(null)
+  const [orders, setOrders] = useState<OrdersResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [currentTab, setCurrentTab] = useState('profile')
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Profile form states
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
 
   // Profile picture upload states
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [profileImage, setProfileImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
-  const { data: organizations } = authClient.useListOrganizations();
+  const { data: organizations } = authClient.useListOrganizations()
 
   // Handle URL tab parameter
   useEffect(() => {
-    const tab = searchParams.get("tab");
-    if (tab && ["profile", "organization", "billing"].includes(tab)) {
-      setCurrentTab(tab);
+    const tab = searchParams.get('tab')
+    if (tab && ['profile', 'organization', 'billing'].includes(tab)) {
+      setCurrentTab(tab)
     }
-  }, [searchParams]);
+  }, [searchParams])
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Get user session
-        const session = await authClient.getSession();
+        const session = await authClient.getSession()
         if (session.data?.user) {
-          setUser(session.data.user);
-          setName(session.data.user.name || "");
-          setEmail(session.data.user.email || "");
+          setUser(session.data.user)
+          setName(session.data.user.name || '')
+          setEmail(session.data.user.email || '')
         }
 
         // Try to fetch orders and customer state with better error handling
         try {
-          const ordersResponse = await authClient.customer.orders.list({});
+          const ordersResponse = await authClient.customer.orders.list({})
 
           if (ordersResponse.data) {
-            setOrders(ordersResponse.data as unknown as OrdersResponse);
+            setOrders(ordersResponse.data as unknown as OrdersResponse)
           } else {
-            console.log("No orders found or customer not created yet");
-            setOrders(null);
+            console.log('No orders found or customer not created yet')
+            setOrders(null)
           }
         } catch (orderError) {
           console.log(
-            "Orders fetch failed - customer may not exist in Polar yet:",
-            orderError,
-          );
-          setOrders(null);
+            'Orders fetch failed - customer may not exist in Polar yet:',
+            orderError
+          )
+          setOrders(null)
         }
 
         try {
-          const { data: customerState } = await authClient.customer.state();
-          console.log("customerState", customerState);
+          const { data: customerState } = await authClient.customer.state()
+          console.log('customerState', customerState)
         } catch (customerError) {
-          console.log("Customer state fetch failed:", customerError);
+          console.log('Customer state fetch failed:', customerError)
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error('Error fetching data:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchData();
-  }, [organizations]);
+    fetchData()
+  }, [organizations])
 
   const handleTabChange = (value: string) => {
-    setCurrentTab(value);
-    const url = new URL(window.location.href);
-    url.searchParams.set("tab", value);
-    router.replace(url.pathname + url.search, { scroll: false });
-  };
+    setCurrentTab(value)
+    const url = new URL(window.location.href)
+    url.searchParams.set('tab', value)
+    router.replace(url.pathname + url.search, { scroll: false })
+  }
 
   const handleUpdateProfile = async () => {
     try {
       await authClient.updateUser({
         name,
-      });
-      toast.success("Profile updated successfully");
+      })
+      toast.success('Profile updated successfully')
     } catch {
-      toast.error("Failed to update profile");
+      toast.error('Failed to update profile')
     }
-  };
+  }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     if (file) {
-      setProfileImage(file);
-      const reader = new FileReader();
+      setProfileImage(file)
+      const reader = new FileReader()
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
-  };
+  }
 
   const handleUploadProfilePicture = async () => {
-    if (!profileImage) return;
+    if (!profileImage) return
 
-    setUploadingImage(true);
+    setUploadingImage(true)
     try {
-      const formData = new FormData();
-      formData.append("file", profileImage);
+      const formData = new FormData()
+      formData.append('file', profileImage)
 
       // Upload to your R2 storage endpoint
-      const response = await fetch("/api/upload-image", {
-        method: "POST",
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
         body: formData,
-      });
+      })
 
       if (response.ok) {
-        const { url } = await response.json();
+        const { url } = await response.json()
 
         // Update user profile with new image URL
         await authClient.updateUser({
           name,
           image: url,
-        });
+        })
 
-        setUser((prev) => (prev ? { ...prev, image: url } : null));
-        setImagePreview(null);
-        setProfileImage(null);
-        toast.success("Profile picture updated successfully");
+        setUser((prev) => (prev ? { ...prev, image: url } : null))
+        setImagePreview(null)
+        setProfileImage(null)
+        toast.success('Profile picture updated successfully')
       } else {
-        throw new Error("Upload failed");
+        throw new Error('Upload failed')
       }
     } catch {
-      toast.error("Failed to upload profile picture");
+      toast.error('Failed to upload profile picture')
     } finally {
-      setUploadingImage(false);
+      setUploadingImage(false)
     }
-  };
+  }
   if (loading) {
     return (
       <div className="flex flex-col gap-6 p-6">
@@ -272,7 +272,7 @@ function SettingsContent() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -310,12 +310,12 @@ function SettingsContent() {
             <CardContent className="space-y-6">
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={imagePreview || user?.image || ""} />
+                  <AvatarImage src={imagePreview || user?.image || ''} />
                   <AvatarFallback>
                     {name
-                      .split(" ")
+                      .split(' ')
                       .map((n) => n[0])
-                      .join("")}
+                      .join('')}
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
@@ -324,11 +324,11 @@ function SettingsContent() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        document.getElementById("profile-image-input")?.click()
+                        document.getElementById('profile-image-input')?.click()
                       }
                       disabled={uploadingImage}
                     >
-                      {uploadingImage ? "Uploading..." : "Change Photo"}
+                      {uploadingImage ? 'Uploading...' : 'Change Photo'}
                     </Button>
                     {profileImage && (
                       <Button
@@ -344,8 +344,8 @@ function SettingsContent() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setImagePreview(null);
-                          setProfileImage(null);
+                          setImagePreview(null)
+                          setProfileImage(null)
                         }}
                       >
                         Cancel
@@ -406,9 +406,9 @@ function SettingsContent() {
                 variant="outline"
                 onClick={async () => {
                   try {
-                    await authClient.customer.portal();
+                    await authClient.customer.portal()
                   } catch (error) {
-                    console.error("Failed to open customer portal:", error);
+                    console.error('Failed to open customer portal:', error)
                     // You could add a toast notification here
                   }
                 }}
@@ -429,15 +429,15 @@ function SettingsContent() {
                           <div>
                             <div className="flex justify-center gap-2">
                               <h4 className="font-medium text-base">
-                                {order.product?.name || "Subscription"}
+                                {order.product?.name || 'Subscription'}
                               </h4>
                               <div className="flex items-center gap-2">
-                                {order.subscription?.status === "paid" ? (
+                                {order.subscription?.status === 'paid' ? (
                                   <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-xs">
                                     Paid
                                   </Badge>
                                 ) : order.subscription?.status ===
-                                  "canceled" ? (
+                                  'canceled' ? (
                                   <Badge
                                     variant="destructive"
                                     className="text-xs"
@@ -445,7 +445,7 @@ function SettingsContent() {
                                     Canceled
                                   </Badge>
                                 ) : order.subscription?.status ===
-                                  "refunded" ? (
+                                  'refunded' ? (
                                   <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs">
                                     Refunded
                                   </Badge>
@@ -455,29 +455,29 @@ function SettingsContent() {
                                   </Badge>
                                 )}
 
-                                {order.subscription?.status === "canceled" && (
+                                {order.subscription?.status === 'canceled' && (
                                   <span className="text-xs text-muted-foreground">
-                                    • Canceled on{" "}
+                                    • Canceled on{' '}
                                     {order.subscription.endedAt
                                       ? new Date(
-                                          order.subscription.endedAt,
-                                        ).toLocaleDateString("en-US", {
-                                          month: "short",
-                                          day: "numeric",
+                                          order.subscription.endedAt
+                                        ).toLocaleDateString('en-US', {
+                                          month: 'short',
+                                          day: 'numeric',
                                         })
-                                      : "N/A"}
+                                      : 'N/A'}
                                   </span>
                                 )}
                               </div>
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {new Date(order.createdAt).toLocaleDateString(
-                                "en-US",
+                                'en-US',
                                 {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                },
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                }
                               )}
                             </div>
                           </div>
@@ -538,7 +538,7 @@ function SettingsContent() {
                     </h3>
                     <p className="mb-4 mt-2 text-sm text-muted-foreground">
                       {orders === null
-                        ? "Unable to load billing history. This may be because your account is not yet set up for billing."
+                        ? 'Unable to load billing history. This may be because your account is not yet set up for billing.'
                         : "You don't have any orders yet. Your billing history will appear here."}
                     </p>
                   </div>
@@ -549,7 +549,7 @@ function SettingsContent() {
         </TabsContent>
       </Tabs>
     </div>
-  );
+  )
 }
 
 export default function SettingsPage() {
@@ -566,5 +566,5 @@ export default function SettingsPage() {
     >
       <SettingsContent />
     </Suspense>
-  );
+  )
 }

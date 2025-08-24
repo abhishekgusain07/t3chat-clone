@@ -1,5 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
-import Link from "next/link";
+import { Card, CardContent } from '@/components/ui/card'
+import Link from 'next/link'
 
 export default function PrivacyPolicy() {
   return (
@@ -279,5 +279,5 @@ export default function PrivacyPolicy() {
         </Card>
       </div>
     </div>
-  );
+  )
 }

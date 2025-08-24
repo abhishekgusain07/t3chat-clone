@@ -1,23 +1,23 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
-import { toast } from "sonner";
+} from '@/components/ui/card'
+import { authClient } from '@/lib/auth-client'
+import { cn } from '@/lib/utils'
+import { useSearchParams } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { toast } from 'sonner'
 
 function SignInContent() {
-  const [loading, setLoading] = useState(false);
-  const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+  const [loading, setLoading] = useState(false)
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get('returnTo')
 
   return (
     <div className="flex flex-col justify-center items-center w-full h-screen">
@@ -34,42 +34,42 @@ function SignInContent() {
           <div className="grid gap-4">
             <div
               className={cn(
-                "w-full gap-2 flex items-center",
-                "justify-between flex-col",
+                'w-full gap-2 flex items-center',
+                'justify-between flex-col'
               )}
             >
               <Button
                 variant="outline"
-                className={cn("w-full gap-2")}
+                className={cn('w-full gap-2')}
                 disabled={loading}
                 onClick={async () => {
                   try {
                     await authClient.signIn.social(
                       {
-                        provider: "google",
-                        callbackURL: returnTo || "/dashboard",
+                        provider: 'google',
+                        callbackURL: returnTo || '/dashboard',
                       },
                       {
                         onRequest: () => {
-                          setLoading(true);
+                          setLoading(true)
                         },
                         onResponse: () => {
-                          setLoading(false);
+                          setLoading(false)
                         },
                         onError: (error) => {
-                          setLoading(false);
-                          console.error("Sign-in error:", error);
+                          setLoading(false)
+                          console.error('Sign-in error:', error)
                           // Consider showing user-friendly error message
                         },
-                      },
-                    );
+                      }
+                    )
                   } catch (error) {
-                    setLoading(false);
-                    console.error("Sign-in failed:", error);
+                    setLoading(false)
+                    console.error('Sign-in failed:', error)
                     // Handle authentication errors appropriately
-                    toast.error("Oops, something went wrong", {
+                    toast.error('Oops, something went wrong', {
                       duration: 5000,
-                    });
+                    })
                   }
                 }}
               >
@@ -103,7 +103,7 @@ function SignInContent() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
 
 export default function SignIn() {
@@ -117,5 +117,5 @@ export default function SignIn() {
     >
       <SignInContent />
     </Suspense>
-  );
+  )
 }

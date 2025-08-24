@@ -1,15 +1,15 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { useChat } from "@ai-sdk/react";
-import Markdown from "react-markdown";
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
+import { useChat } from '@ai-sdk/react'
+import Markdown from 'react-markdown'
 
 export default function Chat() {
   const { messages, input, handleInputChange, handleSubmit } = useChat({
     maxSteps: 10,
-  });
+  })
 
   return (
     <div className="flex flex-col w-full py-24 justify-center items-center">
@@ -18,21 +18,21 @@ export default function Chat() {
           <div
             key={message.id}
             className={cn(
-              "flex",
-              message.role === "user" ? "justify-end" : "justify-start",
+              'flex',
+              message.role === 'user' ? 'justify-end' : 'justify-start'
             )}
           >
             <div
               className={cn(
-                "max-w-[65%] px-3 py-1.5 text-sm shadow-sm",
-                message.role === "user"
-                  ? "bg-[#0B93F6] text-white rounded-2xl rounded-br-sm"
-                  : "bg-[#E9E9EB] text-black rounded-2xl rounded-bl-sm",
+                'max-w-[65%] px-3 py-1.5 text-sm shadow-sm',
+                message.role === 'user'
+                  ? 'bg-[#0B93F6] text-white rounded-2xl rounded-br-sm'
+                  : 'bg-[#E9E9EB] text-black rounded-2xl rounded-bl-sm'
               )}
             >
               {message.parts.map((part) => {
                 switch (part.type) {
-                  case "text":
+                  case 'text':
                     return (
                       <div
                         key={`${message.id}-${i}`}
@@ -40,9 +40,9 @@ export default function Chat() {
                       >
                         <Markdown>{part.text}</Markdown>
                       </div>
-                    );
+                    )
                   default:
-                    return null;
+                    return null
                 }
               })}
             </div>
@@ -69,5 +69,5 @@ export default function Chat() {
         </div>
       </form>
     </div>
-  );
+  )
 }

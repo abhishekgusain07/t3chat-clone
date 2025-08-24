@@ -1,80 +1,80 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import { Check, FileImage, Upload, X } from "lucide-react";
-import Image from "next/image";
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
+import { Check, FileImage, Upload, X } from 'lucide-react'
+import Image from 'next/image'
+import { useCallback, useState } from 'react'
+import { toast } from 'sonner'
 
 interface UploadedFile {
-  id: string;
-  name: string;
-  url: string;
-  size: number;
-  type: string;
-  uploadedAt: Date;
+  id: string
+  name: string
+  url: string
+  size: number
+  type: string
+  uploadedAt: Date
 }
 
 export default function UploadPage() {
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [dragActive, setDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [dragActive, setDragActive] = useState(false)
 
   const handleFileUpload = async (files: FileList | File[]) => {
-    const fileArray = Array.from(files);
+    const fileArray = Array.from(files)
 
     for (const file of fileArray) {
-      if (!file.type.startsWith("image/")) {
-        toast.error(`${file.name} is not an image file`);
-        continue;
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not an image file`)
+        continue
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${file.name} is too large (max 5MB)`);
-        continue;
+        toast.error(`${file.name} is too large (max 5MB)`)
+        continue
       }
 
-      setUploading(true);
-      setUploadProgress(0);
+      setUploading(true)
+      setUploadProgress(0)
 
       try {
-        const formData = new FormData();
-        formData.append("file", file);
+        const formData = new FormData()
+        formData.append('file', file)
 
         // Simulate progress
         const progressInterval = setInterval(() => {
           setUploadProgress((prev) => {
             if (prev >= 90) {
-              clearInterval(progressInterval);
-              return prev;
+              clearInterval(progressInterval)
+              return prev
             }
-            return prev + Math.random() * 20;
-          });
-        }, 200);
+            return prev + Math.random() * 20
+          })
+        }, 200)
 
-        const response = await fetch("/api/upload-image", {
-          method: "POST",
+        const response = await fetch('/api/upload-image', {
+          method: 'POST',
           body: formData,
-        });
+        })
 
-        clearInterval(progressInterval);
-        setUploadProgress(100);
+        clearInterval(progressInterval)
+        setUploadProgress(100)
 
         if (!response.ok) {
-          throw new Error("Upload failed");
+          throw new Error('Upload failed')
         }
 
-        const { url } = await response.json();
+        const { url } = await response.json()
 
         const uploadedFile: UploadedFile = {
           id: crypto.randomUUID(),
@@ -83,57 +83,57 @@ export default function UploadPage() {
           size: file.size,
           type: file.type,
           uploadedAt: new Date(),
-        };
+        }
 
-        setUploadedFiles((prev) => [uploadedFile, ...prev]);
-        toast.success(`${file.name} uploaded successfully`);
+        setUploadedFiles((prev) => [uploadedFile, ...prev])
+        toast.success(`${file.name} uploaded successfully`)
       } catch (error) {
-        console.error("Upload error:", error);
-        toast.error(`Failed to upload ${file.name}`);
+        console.error('Upload error:', error)
+        toast.error(`Failed to upload ${file.name}`)
       } finally {
-        setUploading(false);
-        setUploadProgress(0);
+        setUploading(false)
+        setUploadProgress(0)
       }
     }
-  };
+  }
 
   const handleDrag = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
     }
-  }, []);
+  }, [])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileUpload(e.dataTransfer.files);
+      handleFileUpload(e.dataTransfer.files)
     }
-  }, []);
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      handleFileUpload(e.target.files);
+      handleFileUpload(e.target.files)
     }
-  };
+  }
 
   const removeFile = (id: string) => {
-    setUploadedFiles((prev) => prev.filter((file) => file.id !== id));
-  };
+    setUploadedFiles((prev) => prev.filter((file) => file.id !== id))
+  }
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -160,8 +160,8 @@ export default function UploadPage() {
             <div
               className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                 dragActive
-                  ? "border-primary bg-primary/5"
-                  : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted-foreground/25 hover:border-muted-foreground/50'
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -181,8 +181,8 @@ export default function UploadPage() {
                 <div>
                   <p className="text-sm font-medium">
                     {dragActive
-                      ? "Drop files here"
-                      : "Click to upload or drag and drop"}
+                      ? 'Drop files here'
+                      : 'Click to upload or drag and drop'}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     PNG, JPG, GIF up to 5MB
@@ -298,7 +298,7 @@ export default function UploadPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.open(file.url, "_blank")}
+                        onClick={() => window.open(file.url, '_blank')}
                         className="flex-1 text-xs"
                       >
                         Open
@@ -320,5 +320,5 @@ export default function UploadPage() {
         </Card>
       )}
     </div>
-  );
+  )
 }

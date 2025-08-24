@@ -5,9 +5,9 @@ import {
   Polar,
   NeonPostgres,
   Nextjs,
-} from "@/components/logos";
-import { Card } from "@/components/ui/card";
-import * as React from "react";
+} from '@/components/logos'
+import { Card } from '@/components/ui/card'
+import * as React from 'react'
 
 export default function Integrations() {
   return (
@@ -76,7 +76,7 @@ export default function Integrations() {
         </div>
       </div>
     </section>
-  );
+  )
 }
 
 const IntegrationCard = ({
@@ -85,10 +85,10 @@ const IntegrationCard = ({
   children,
   link,
 }: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-  link?: string;
+  title: string
+  description: string
+  children: React.ReactNode
+  link?: string
 }) => {
   const CardContent = () => (
     <div className="relative">
@@ -99,7 +99,7 @@ const IntegrationCard = ({
         <p className="text-muted-foreground line-clamp-2">{description}</p>
       </div>
     </div>
-  );
+  )
 
   if (link) {
     return (
@@ -113,12 +113,12 @@ const IntegrationCard = ({
           <CardContent />
         </Card>
       </a>
-    );
+    )
   }
 
   return (
     <Card className="p-6">
       <CardContent />
     </Card>
-  );
-};
+  )
+}

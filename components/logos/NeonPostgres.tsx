@@ -1,5 +1,5 @@
-import * as React from "react";
-import type { SVGProps } from "react";
+import * as React from 'react'
+import type { SVGProps } from 'react'
 const Neon = (props: SVGProps<SVGSVGElement>) => (
   <svg
     viewBox="0 0 256 256"
@@ -37,5 +37,5 @@ const Neon = (props: SVGProps<SVGSVGElement>) => (
       d="M211.861 0C236.238 0 256 19.762 256 44.139v142.649c0 25.216-31.915 36.16-47.388 16.256l-48.392-62.251v75.484c0 21.939-17.784 39.723-39.722 39.723a4.409 4.409 0 0 0 4.409-4.409V115.058c0-25.223 31.914-36.167 47.395-16.256l48.391 62.243V8.825c0-4.871-3.953-8.825-8.832-8.825Z"
     />
   </svg>
-);
-export default Neon;
+)
+export default Neon

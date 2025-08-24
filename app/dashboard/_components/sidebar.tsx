@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import UserProfile from "@/components/user-profile";
-import clsx from "clsx";
+import UserProfile from '@/components/user-profile'
+import clsx from 'clsx'
 import {
   Banknote,
   HomeIcon,
@@ -9,42 +9,42 @@ import {
   MessageCircleIcon,
   Settings,
   Upload,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+} from 'lucide-react'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 
 interface NavItem {
-  label: string;
-  href: string;
-  icon: LucideIcon;
+  label: string
+  href: string
+  icon: LucideIcon
 }
 
 const navItems: NavItem[] = [
   {
-    label: "Overview",
-    href: "/dashboard",
+    label: 'Overview',
+    href: '/dashboard',
     icon: HomeIcon,
   },
   {
-    label: "Chat",
-    href: "/dashboard/chat",
+    label: 'Chat',
+    href: '/dashboard/chat',
     icon: MessageCircleIcon,
   },
   {
-    label: "Upload",
-    href: "/dashboard/upload",
+    label: 'Upload',
+    href: '/dashboard/upload',
     icon: Upload,
   },
   {
-    label: "Payment Gated",
-    href: "/dashboard/payment",
+    label: 'Payment Gated',
+    href: '/dashboard/payment',
     icon: Banknote,
   },
-];
+]
 
 export default function DashboardSideBar() {
-  const pathname = usePathname();
-  const router = useRouter();
+  const pathname = usePathname()
+  const router = useRouter()
 
   return (
     <div className="min-[1024px]:block hidden w-64 border-r h-full bg-background">
@@ -66,10 +66,10 @@ export default function DashboardSideBar() {
                 key={item.href}
                 onClick={() => router.push(item.href)}
                 className={clsx(
-                  "flex items-center gap-2 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:cursor-pointer",
+                  'flex items-center gap-2 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:cursor-pointer',
                   pathname === item.href
-                    ? "bg-primary/10 text-primary hover:bg-primary/20"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? 'bg-primary/10 text-primary hover:bg-primary/20'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -81,12 +81,12 @@ export default function DashboardSideBar() {
           <div className="flex flex-col gap-2 w-full">
             <div className="px-4">
               <div
-                onClick={() => router.push("/dashboard/settings")}
+                onClick={() => router.push('/dashboard/settings')}
                 className={clsx(
-                  "flex items-center w-full gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:cursor-pointer",
-                  pathname === "/dashboard/settings"
-                    ? "bg-primary/10 text-primary hover:bg-primary/20"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  'flex items-center w-full gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:cursor-pointer',
+                  pathname === '/dashboard/settings'
+                    ? 'bg-primary/10 text-primary hover:bg-primary/20'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
               >
                 <Settings className="h-4 w-4" />
@@ -98,5 +98,5 @@ export default function DashboardSideBar() {
         </nav>
       </div>
     </div>
-  );
+  )
 }

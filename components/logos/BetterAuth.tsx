@@ -1,5 +1,5 @@
-import * as React from "react";
-import type { SVGProps } from "react";
+import * as React from 'react'
+import type { SVGProps } from 'react'
 const BetterAuth = (props: SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -17,5 +17,5 @@ const BetterAuth = (props: SVGProps<SVGSVGElement>) => (
     />
     <path fill="#000" d="M252.762 204.455v92.089h-96.774v-92.089z" />
   </svg>
-);
-export default BetterAuth;
+)
+export default BetterAuth

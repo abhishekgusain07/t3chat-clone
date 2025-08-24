@@ -1,24 +1,24 @@
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { getSubscriptionDetails } from "@/lib/subscription";
-import Link from "next/link";
-import ManageSubscription from "./_components/manage-subscription";
+} from '@/components/ui/card'
+import { getSubscriptionDetails } from '@/lib/subscription'
+import Link from 'next/link'
+import ManageSubscription from './_components/manage-subscription'
 
 export default async function PaymentPage() {
-  const subscriptionDetails = await getSubscriptionDetails();
+  const subscriptionDetails = await getSubscriptionDetails()
 
   return (
     <div>
       <div className="p-6 space-y-4">
         <div className="relative min-h-screen">
           {!subscriptionDetails.hasSubscription ||
-          subscriptionDetails.subscription?.status !== "active" ? (
+          subscriptionDetails.subscription?.status !== 'active' ? (
             <>
               <div className="absolute inset-0 z-10 rounded-lg flex items-center justify-center">
                 <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-lg text-center max-w-md">
@@ -84,7 +84,7 @@ export default async function PaymentPage() {
                       Amount
                     </p>
                     <p className="text-md">
-                      {subscriptionDetails.subscription.amount / 100}{" "}
+                      {subscriptionDetails.subscription.amount / 100}{' '}
                       {subscriptionDetails.subscription.currency.toUpperCase()}
                     </p>
                   </div>
@@ -102,7 +102,7 @@ export default async function PaymentPage() {
                     </p>
                     <p className="text-md">
                       {new Date(
-                        subscriptionDetails.subscription.currentPeriodEnd,
+                        subscriptionDetails.subscription.currentPeriodEnd
                       ).toLocaleDateString()}
                     </p>
                   </div>
@@ -122,5 +122,5 @@ export default async function PaymentPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

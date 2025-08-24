@@ -1,15 +1,15 @@
-import Link from "next/link";
+import Link from 'next/link'
 
 const links = [
   {
-    title: "X",
-    href: "https://www.x.com/rasmickyy",
+    title: 'X',
+    href: 'https://www.x.com/rasmickyy',
   },
   {
-    title: "YouTube",
-    href: "https://www.youtube.com/@rasmic",
+    title: 'YouTube',
+    href: 'https://www.youtube.com/@rasmic',
   },
-];
+]
 
 export default function FooterSection() {
   return (
@@ -36,5 +36,5 @@ export default function FooterSection() {
         </div>
       </div>
     </footer>
-  );
+  )
 }

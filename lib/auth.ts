@@ -1,29 +1,23 @@
-import { db } from "@/db/drizzle";
-import { account, session, subscription, user, verification } from "@/db/schema";
-import {
-  checkout,
-  polar,
-  portal,
-  usage,
-  webhooks,
-} from "@polar-sh/better-auth";
-import { Polar } from "@polar-sh/sdk";
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { nextCookies } from "better-auth/next-js";
-import { syncUserToConvex } from "./convex-sync";
+import { db } from '@/db/drizzle'
+import { account, session, subscription, user, verification } from '@/db/schema'
+import { checkout, polar, portal, usage, webhooks } from '@polar-sh/better-auth'
+import { Polar } from '@polar-sh/sdk'
+import { betterAuth } from 'better-auth'
+import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { nextCookies } from 'better-auth/next-js'
+import { syncUserToConvex } from './convex-sync'
 
 // Utility function to safely parse dates
 function safeParseDate(value: string | Date | null | undefined): Date | null {
-  if (!value) return null;
-  if (value instanceof Date) return value;
-  return new Date(value);
+  if (!value) return null
+  if (value instanceof Date) return value
+  return new Date(value)
 }
 
 const polarClient = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN,
-  server: "sandbox",
-});
+  server: 'sandbox',
+})
 
 export const auth = betterAuth({
   trustedOrigins: [`${process.env.NEXT_PUBLIC_APP_URL}`],
@@ -33,14 +27,14 @@ export const auth = betterAuth({
     maxAge: 5 * 60, // Cache duration in seconds
   },
   database: drizzleAdapter(db, {
-    provider: "pg",
+    provider: 'pg',
     schema: {
       user,
       session,
       account,
       verification,
       subscription,
-    }
+    },
   }),
   socialProviders: {
     google: {
@@ -53,21 +47,26 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          console.log("🎯 Better Auth user created, syncing to Convex:", user.email);
-          
+          console.log(
+            '🎯 Better Auth user created, syncing to Convex:',
+            user.email
+          )
+
           // Sync user to Convex database
-          const syncResult = await syncUserToConvex(user);
-          
+          const syncResult = await syncUserToConvex(user)
+
           if (syncResult) {
-            console.log(`✅ User sync to Convex successful: ${syncResult.action}`);
+            console.log(
+              `✅ User sync to Convex successful: ${syncResult.action}`
+            )
           } else {
-            console.error("❌ Failed to sync user to Convex");
+            console.error('❌ Failed to sync user to Convex')
             // Note: We don't throw an error here to avoid breaking user registration
             // The user registration should succeed even if Convex sync fails
           }
-        }
-      }
-    }
+        },
+      },
+    },
   },
   plugins: [
     polar({
@@ -81,15 +80,15 @@ export const auth = betterAuth({
                 process.env.NEXT_PUBLIC_STARTER_TIER ||
                 (() => {
                   throw new Error(
-                    "NEXT_PUBLIC_STARTER_TIER environment variable is required",
-                  );
+                    'NEXT_PUBLIC_STARTER_TIER environment variable is required'
+                  )
                 })(),
               slug:
                 process.env.NEXT_PUBLIC_STARTER_SLUG ||
                 (() => {
                   throw new Error(
-                    "NEXT_PUBLIC_STARTER_SLUG environment variable is required",
-                  );
+                    'NEXT_PUBLIC_STARTER_SLUG environment variable is required'
+                  )
                 })(),
             },
           ],
@@ -103,24 +102,24 @@ export const auth = betterAuth({
             process.env.POLAR_WEBHOOK_SECRET ||
             (() => {
               throw new Error(
-                "POLAR_WEBHOOK_SECRET environment variable is required",
-              );
+                'POLAR_WEBHOOK_SECRET environment variable is required'
+              )
             })(),
           onPayload: async ({ data, type }) => {
             if (
-              type === "subscription.created" ||
-              type === "subscription.active" ||
-              type === "subscription.canceled" ||
-              type === "subscription.revoked" ||
-              type === "subscription.uncanceled" ||
-              type === "subscription.updated"
+              type === 'subscription.created' ||
+              type === 'subscription.active' ||
+              type === 'subscription.canceled' ||
+              type === 'subscription.revoked' ||
+              type === 'subscription.uncanceled' ||
+              type === 'subscription.updated'
             ) {
-              console.log("🎯 Processing subscription webhook:", type);
-              console.log("📦 Payload data:", JSON.stringify(data, null, 2));
+              console.log('🎯 Processing subscription webhook:', type)
+              console.log('📦 Payload data:', JSON.stringify(data, null, 2))
 
               try {
                 // STEP 1: Extract user ID from customer data
-                const userId = data.customer?.externalId;
+                const userId = data.customer?.externalId
                 // STEP 2: Build subscription data
                 const subscriptionData = {
                   id: data.id,
@@ -142,7 +141,7 @@ export const auth = betterAuth({
                   customerId: data.customerId,
                   productId: data.productId,
                   discountId: data.discountId || null,
-                  checkoutId: data.checkoutId || "",
+                  checkoutId: data.checkoutId || '',
                   customerCancellationReason:
                     data.customerCancellationReason || null,
                   customerCancellationComment:
@@ -154,14 +153,14 @@ export const auth = betterAuth({
                     ? JSON.stringify(data.customFieldData)
                     : null,
                   userId: userId as string | null,
-                };
+                }
 
-                console.log("💾 Final subscription data:", {
+                console.log('💾 Final subscription data:', {
                   id: subscriptionData.id,
                   status: subscriptionData.status,
                   userId: subscriptionData.userId,
                   amount: subscriptionData.amount,
-                });
+                })
 
                 // STEP 3: Use Drizzle's onConflictDoUpdate for proper upsert
                 await db
@@ -194,14 +193,14 @@ export const auth = betterAuth({
                       customFieldData: subscriptionData.customFieldData,
                       userId: subscriptionData.userId,
                     },
-                  });
+                  })
 
-                console.log("✅ Upserted subscription:", data.id);
+                console.log('✅ Upserted subscription:', data.id)
               } catch (error) {
                 console.error(
-                  "💥 Error processing subscription webhook:",
-                  error,
-                );
+                  '💥 Error processing subscription webhook:',
+                  error
+                )
                 // Don't throw - let webhook succeed to avoid retries
               }
             }
@@ -210,5 +209,5 @@ export const auth = betterAuth({
       ],
     }),
     nextCookies(),
-  ]
-});
+  ],
+})

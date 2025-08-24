@@ -1,7 +1,7 @@
-"use client";
-import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+'use client'
+import { Button } from '@/components/ui/button'
+import { ExternalLink } from 'lucide-react'
+import { authClient } from '@/lib/auth-client'
 
 export default function ManageSubscription() {
   return (
@@ -9,14 +9,14 @@ export default function ManageSubscription() {
       variant="outline"
       onClick={async () => {
         try {
-          await authClient.customer.portal();
+          await authClient.customer.portal()
         } catch (error) {
-          console.error("Failed to open customer portal:", error);
+          console.error('Failed to open customer portal:', error)
         }
       }}
     >
       <ExternalLink className="h-4 w-4 mr-2" />
       Manage Subscription
     </Button>
-  );
+  )
 }

@@ -1,10 +1,10 @@
-"use client";
-import { Input } from "@/components/ui/input";
-import { Bot, X } from "lucide-react";
-import { useState } from "react";
+'use client'
+import { Input } from '@/components/ui/input'
+import { Bot, X } from 'lucide-react'
+import { useState } from 'react'
 
 export default function Chatbot() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
   return (
     <div className="absolute bottom-4 right-4 z-[99]">
       <div
@@ -35,5 +35,5 @@ export default function Chatbot() {
         </div>
       )}
     </div>
-  );
+  )
 }

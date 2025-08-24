@@ -1,11 +1,11 @@
-import FooterSection from "@/components/homepage/footer";
-import HeroSection from "@/components/homepage/hero-section";
-import Integrations from "@/components/homepage/integrations";
-import { getSubscriptionDetails } from "@/lib/subscription";
-import PricingTable from "./pricing/_component/pricing-table";
+import FooterSection from '@/components/homepage/footer'
+import HeroSection from '@/components/homepage/hero-section'
+import Integrations from '@/components/homepage/integrations'
+import { getSubscriptionDetails } from '@/lib/subscription'
+import PricingTable from './pricing/_component/pricing-table'
 
 export default async function Home() {
-  const subscriptionDetails = await getSubscriptionDetails();
+  const subscriptionDetails = await getSubscriptionDetails()
 
   return (
     <>
@@ -14,5 +14,5 @@ export default async function Home() {
       <PricingTable subscriptionDetails={subscriptionDetails} />
       <FooterSection />
     </>
-  );
+  )
 }

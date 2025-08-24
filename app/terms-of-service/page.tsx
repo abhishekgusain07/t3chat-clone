@@ -1,5 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
-import Link from "next/link";
+import { Card, CardContent } from '@/components/ui/card'
+import Link from 'next/link'
 
 export default function TermsOfService() {
   return (
@@ -318,5 +318,5 @@ export default function TermsOfService() {
         </Card>
       </div>
     </div>
-  );
+  )
 }

@@ -1,18 +1,18 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { CheckCircle, ArrowRight, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
+} from '@/components/ui/card'
+import { CheckCircle, ArrowRight, Sparkles } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function SuccessPage() {
-  const router = useRouter();
+  const router = useRouter()
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
@@ -41,7 +41,7 @@ export default function SuccessPage() {
           </div>
 
           <Button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push('/dashboard')}
             className="w-full text-white font-medium py-3"
             size="lg"
           >
@@ -56,5 +56,5 @@ export default function SuccessPage() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

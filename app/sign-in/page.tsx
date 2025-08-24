@@ -1,24 +1,24 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
-import { toast } from "sonner";
+} from '@/components/ui/card'
+import { authClient } from '@/lib/auth-client'
+import { cn } from '@/lib/utils'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { toast } from 'sonner'
 
 function SignInContent() {
-  const [loading, setLoading] = useState(false);
-  const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+  const [loading, setLoading] = useState(false)
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get('returnTo')
 
   return (
     <div className="flex flex-col justify-center items-center w-full h-screen">
@@ -35,42 +35,42 @@ function SignInContent() {
           <div className="grid gap-4">
             <div
               className={cn(
-                "w-full gap-2 flex items-center",
-                "justify-between flex-col",
+                'w-full gap-2 flex items-center',
+                'justify-between flex-col'
               )}
             >
               <Button
                 variant="outline"
-                className={cn("w-full gap-2")}
+                className={cn('w-full gap-2')}
                 disabled={loading}
                 onClick={async () => {
                   try {
                     await authClient.signIn.social(
                       {
-                        provider: "google",
-                        callbackURL: returnTo || "/dashboard",
+                        provider: 'google',
+                        callbackURL: returnTo || '/dashboard',
                       },
                       {
                         onRequest: () => {
-                          setLoading(true);
+                          setLoading(true)
                         },
                         onResponse: () => {
-                          setLoading(false);
+                          setLoading(false)
                         },
                         onError: (ctx) => {
-                          setLoading(false);
+                          setLoading(false)
                           // Add user-friendly error handling here
-                          console.error("Sign-in failed:", ctx.error);
+                          console.error('Sign-in failed:', ctx.error)
                         },
-                      },
-                    );
+                      }
+                    )
                   } catch (error) {
-                    setLoading(false);
-                    console.error("Authentication error:", error);
+                    setLoading(false)
+                    console.error('Authentication error:', error)
                     // Consider adding toast notification for user feedback
-                    toast.error("Oops, something went wrong", {
+                    toast.error('Oops, something went wrong', {
                       duration: 5000,
-                    });
+                    })
                   }
                 }}
               >
@@ -104,14 +104,14 @@ function SignInContent() {
         </CardContent>
       </Card>
       <p className="mt-6 text-xs text-center text-gray-500 dark:text-gray-400 max-w-md">
-        By signing in, you agree to our{" "}
+        By signing in, you agree to our{' '}
         <Link
           href="/terms-of-service"
           className="underline hover:text-gray-700 dark:hover:text-gray-300"
         >
           Terms of Service
-        </Link>{" "}
-        and{" "}
+        </Link>{' '}
+        and{' '}
         <Link
           href="/privacy-policy"
           className="underline hover:text-gray-700 dark:hover:text-gray-300"
@@ -120,7 +120,7 @@ function SignInContent() {
         </Link>
       </p>
     </div>
-  );
+  )
 }
 
 export default function SignIn() {
@@ -134,5 +134,5 @@ export default function SignIn() {
     >
       <SignInContent />
     </Suspense>
-  );
+  )
 }

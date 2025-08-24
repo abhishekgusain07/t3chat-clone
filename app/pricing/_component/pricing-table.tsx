@@ -1,6 +1,6 @@
-"use client";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+'use client'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -8,105 +8,105 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { authClient } from "@/lib/auth-client";
-import { Check } from "lucide-react";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+} from '@/components/ui/card'
+import { authClient } from '@/lib/auth-client'
+import { Check } from 'lucide-react'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 type SubscriptionDetails = {
-  id: string;
-  productId: string;
-  status: string;
-  amount: number;
-  currency: string;
-  recurringInterval: string;
-  currentPeriodStart: Date;
-  currentPeriodEnd: Date;
-  cancelAtPeriodEnd: boolean;
-  canceledAt: Date | null;
-  organizationId: string | null;
-};
+  id: string
+  productId: string
+  status: string
+  amount: number
+  currency: string
+  recurringInterval: string
+  currentPeriodStart: Date
+  currentPeriodEnd: Date
+  cancelAtPeriodEnd: boolean
+  canceledAt: Date | null
+  organizationId: string | null
+}
 
 type SubscriptionDetailsResult = {
-  hasSubscription: boolean;
-  subscription?: SubscriptionDetails;
-  error?: string;
-  errorType?: "CANCELED" | "EXPIRED" | "GENERAL";
-};
+  hasSubscription: boolean
+  subscription?: SubscriptionDetails
+  error?: string
+  errorType?: 'CANCELED' | 'EXPIRED' | 'GENERAL'
+}
 
 interface PricingTableProps {
-  subscriptionDetails: SubscriptionDetailsResult;
+  subscriptionDetails: SubscriptionDetailsResult
 }
 
 export default function PricingTable({
   subscriptionDetails,
 }: PricingTableProps) {
-  const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const session = await authClient.getSession();
-        setIsAuthenticated(!!session.data?.user);
+        const session = await authClient.getSession()
+        setIsAuthenticated(!!session.data?.user)
       } catch {
-        setIsAuthenticated(false);
+        setIsAuthenticated(false)
       }
-    };
-    checkAuth();
-  }, []);
+    }
+    checkAuth()
+  }, [])
 
   const handleCheckout = async (productId: string, slug: string) => {
     if (isAuthenticated === false) {
-      router.push("/sign-in");
-      return;
+      router.push('/sign-in')
+      return
     }
 
     try {
       await authClient.checkout({
         products: [productId],
         slug: slug,
-      });
+      })
     } catch (error) {
-      console.error("Checkout failed:", error);
+      console.error('Checkout failed:', error)
       // TODO: Add user-facing error notification
-      toast.error("Oops, something went wrong");
+      toast.error('Oops, something went wrong')
     }
-  };
+  }
 
   const handleManageSubscription = async () => {
     try {
-      await authClient.customer.portal();
+      await authClient.customer.portal()
     } catch (error) {
-      console.error("Failed to open customer portal:", error);
-      toast.error("Failed to open subscription management");
+      console.error('Failed to open customer portal:', error)
+      toast.error('Failed to open subscription management')
     }
-  };
+  }
 
-  const STARTER_TIER = process.env.NEXT_PUBLIC_STARTER_TIER;
-  const STARTER_SLUG = process.env.NEXT_PUBLIC_STARTER_SLUG;
+  const STARTER_TIER = process.env.NEXT_PUBLIC_STARTER_TIER
+  const STARTER_SLUG = process.env.NEXT_PUBLIC_STARTER_SLUG
 
   if (!STARTER_TIER || !STARTER_SLUG) {
-    throw new Error("Missing required environment variables for Starter tier");
+    throw new Error('Missing required environment variables for Starter tier')
   }
 
   const isCurrentPlan = (tierProductId: string) => {
     return (
       subscriptionDetails.hasSubscription &&
       subscriptionDetails.subscription?.productId === tierProductId &&
-      subscriptionDetails.subscription?.status === "active"
-    );
-  };
+      subscriptionDetails.subscription?.status === 'active'
+    )
+  }
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
 
   return (
     <section className="flex flex-col items-center justify-center px-4 mb-24 w-full">
@@ -182,8 +182,8 @@ export default function PricingTable({
                 onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}
               >
                 {isAuthenticated === false
-                  ? "Sign In to Get Started"
-                  : "Get Started"}
+                  ? 'Sign In to Get Started'
+                  : 'Get Started'}
               </Button>
             )}
           </CardFooter>
@@ -192,12 +192,12 @@ export default function PricingTable({
 
       <div className="mt-12 text-center">
         <p className="text-muted-foreground">
-          Need a custom plan?{" "}
+          Need a custom plan?{' '}
           <span className="text-primary cursor-pointer hover:underline">
             Contact us
           </span>
         </p>
       </div>
     </section>
-  );
+  )
 }

@@ -1,12 +1,12 @@
-import { ReactNode } from "react";
-import DashboardTopNav from "./_components/navbar";
-import DashboardSideBar from "./_components/sidebar";
-import Chatbot from "./_components/chatbot";
+import { ReactNode } from 'react'
+import DashboardTopNav from './_components/navbar'
+import DashboardSideBar from './_components/sidebar'
+import Chatbot from './_components/chatbot'
 
 export default async function DashboardLayout({
   children,
 }: {
-  children: ReactNode;
+  children: ReactNode
 }) {
   return (
     <div className="flex h-screen overflow-hidden w-full">
@@ -16,5 +16,5 @@ export default async function DashboardLayout({
       </main>
       <Chatbot />
     </div>
-  );
+  )
 }
