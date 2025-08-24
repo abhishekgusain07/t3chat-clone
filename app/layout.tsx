@@ -41,7 +41,12 @@ export default function RootLayout({
           forcedTheme="light"
           disableTransitionOnChange
         >
-          {children}
+          <div
+            className="max-h-screen w-full overflow-y-auto"
+            style={{ scrollbarGutter: 'stable' }}
+          >
+            {children}
+          </div>
           <Toaster />
           <Analytics />
         </ThemeProvider>
