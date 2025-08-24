@@ -1,6 +1,7 @@
 import React from 'react'
 import SettingsHeader from './_components/settings-header'
 import SidebarProfile from './_components/sidebar-profile'
+import SettingsTabs from './_components/settings-tab'
 
 const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -8,7 +9,10 @@ const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
       <SettingsHeader />
       <div className="flex flex-grow flex-col gap-4 md:flex-row">
         <SidebarProfile />
-        <div className="md:w-3/4 md:pl-12 lg:w-auto lg:max-w-[70%]"></div>
+        {/* setting tab : incomplete */}
+        <div className="md:w-3/4 md:pl-12 lg:w-auto lg:max-w-[70%]">
+          <SettingsTabs />
+        </div>
       </div>
     </div>
   )
