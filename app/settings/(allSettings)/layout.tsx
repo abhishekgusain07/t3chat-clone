@@ -9,9 +9,9 @@ const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
       <SettingsHeader />
       <div className="flex flex-grow flex-col gap-4 md:flex-row">
         <SidebarProfile />
-        {/* setting tab : incomplete */}
         <div className="md:w-3/4 md:pl-12 lg:w-auto lg:max-w-[70%]">
           <SettingsTabs />
+          {children}
         </div>
       </div>
     </div>
