@@ -11,6 +11,7 @@ import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { syncUserToConvex } from "./convex-sync";
 
 // Utility function to safely parse dates
 function safeParseDate(value: string | Date | null | undefined): Date | null {
@@ -46,6 +47,27 @@ export const auth = betterAuth({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
+  },
+  // Database hooks for syncing user data to Convex
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          console.log("🎯 Better Auth user created, syncing to Convex:", user.email);
+          
+          // Sync user to Convex database
+          const syncResult = await syncUserToConvex(user);
+          
+          if (syncResult) {
+            console.log(`✅ User sync to Convex successful: ${syncResult.action}`);
+          } else {
+            console.error("❌ Failed to sync user to Convex");
+            // Note: We don't throw an error here to avoid breaking user registration
+            // The user registration should succeed even if Convex sync fails
+          }
+        }
+      }
+    }
   },
   plugins: [
     polar({
