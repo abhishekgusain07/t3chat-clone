@@ -33,7 +33,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-[-apple-system,BlinkMacSystemFont]antialiased`}>
+      <body
+        className={`antialiased selection:bg-primary selection:text-white font-sans [font-feature-settings:'ss05'_on] proportional-nums`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
