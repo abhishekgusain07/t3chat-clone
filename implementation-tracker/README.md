@@ -16,16 +16,14 @@ Integrate zeronsh architecture into t3chat with hybrid PostgreSQL + Convex setup
 - Credit calculation system with model-based costs and token counting
 - Comprehensive rate limit validation service with edge case handling
 - Usage increment service with transaction safety and error handling
+- ✅ API routes for rate limit checking and usage tracking
 
-**In Progress**:
-- ☐ Create API routes for rate limit checking and usage tracking
-
-### Phase 2A: Core Chat Integration
-**Pending**:
-- Create Convex mutations for threads & messages
-- Build basic chat interface using backend systems
-- Integrate rate limiting validation in chat flow
-- Add model selection with tier-based filtering
+### Phase 2A: Core Chat Integration ✅
+**Completed**:
+- ✅ Create Convex mutations for threads & messages
+- ✅ Build basic chat interface using backend systems  
+- ✅ Integrate rate limiting validation in chat flow
+- ✅ Add model selection with tier-based filtering
 
 ### Phase 2B: AI Streaming System
 **Pending**:
@@ -47,5 +45,6 @@ Integrate zeronsh architecture into t3chat with hybrid PostgreSQL + Convex setup
 - **Docs**: `/Users/abhishekgusain/Documents/t3chatapp/t3chat/docs/`
 
 ## Current Session
-**Phase**: 1B - Complete API Foundation
-**Tasks**: Rate limit API routes, enhance chat API with rate limiting
+**Phase**: 2A ✅ → 2B - AI Streaming System  
+**Last Completed**: Core chat interface with Convex integration and rate limiting
+**Next**: Enhanced AI streaming with resumability and better provider support

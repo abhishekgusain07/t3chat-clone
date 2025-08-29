@@ -9,6 +9,9 @@ import { useConvex, useMutation, useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { nanoid } from 'nanoid'
 import { ModelSelector } from '@/components/chat/ModelSelector'
+import { StreamingMessage } from '@/components/chat/StreamingMessage'
+import { ThreadSidebar } from '@/components/chat/ThreadSidebar'
+import { Id } from '@/convex/_generated/dataModel'
 
 export default function Chat() {
   const convex = useConvex()
@@ -193,69 +196,69 @@ export default function Chat() {
     }
   }
 
-  return (
-    <div className="flex flex-col w-full py-24 justify-center items-center">
-      <div className="w-full max-w-xl space-y-4 mb-20">
-        {(messages || []).map((message) => (
-          <div
-            key={message._id}
-            className={cn(
-              'flex',
-              message.role === 'user' ? 'justify-end' : 'justify-start'
-            )}
-          >
-            <div
-              className={cn(
-                'max-w-[65%] px-3 py-1.5 text-sm shadow-sm',
-                message.role === 'user'
-                  ? 'bg-[#0B93F6] text-white rounded-2xl rounded-br-sm'
-                  : 'bg-[#E9E9EB] text-black rounded-2xl rounded-bl-sm'
-              )}
-            >
-              <div className="prose-sm prose-p:my-0.5 prose-li:my-0.5 prose-ul:my-1 prose-ol:my-1">
-                <Markdown>{message.content}</Markdown>
-              </div>
-              {message.isStreaming && (
-                <div className="animate-pulse text-gray-500 text-xs mt-1">
-                  Generating...
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+  const handleThreadSelect = (threadId: string) => {
+    setCurrentThreadId(threadId)
+  }
 
-      <form
-        className="flex gap-2 justify-center w-full items-center fixed bottom-0"
-        onSubmit={handleSubmit}
-      >
-        <div className="flex flex-col gap-2 justify-center items-start mb-8 max-w-xl w-full border p-2 rounded-lg bg-white">
-          <div className="flex items-center gap-2 w-full">
-            <ModelSelector
-              selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
-              userTier={userTier}
+  const handleNewThread = () => {
+    setInput('')
+  }
+
+  return (
+    <div className="flex h-screen">
+      <ThreadSidebar
+        currentThreadId={currentThreadId}
+        onThreadSelect={handleThreadSelect}
+        onNewThread={handleNewThread}
+      />
+
+      <div className="flex-1 flex flex-col">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {(messages || []).map((message) => (
+            <StreamingMessage
+              key={message._id}
+              message={message}
+              showStats={userPreferences?.statsForNerds}
             />
-          </div>
-          <Input
-            className="w-full border-0 shadow-none !ring-transparent"
-            value={input}
-            placeholder="Say something..."
-            onChange={(e) => setInput(e.target.value)}
-            disabled={isLoading}
-          />
-          <div className="flex justify-end gap-3 items-center w-full">
-            <Button
-              size="sm"
-              className="text-xs"
-              type="submit"
-              disabled={isLoading || !input.trim()}
-            >
-              {isLoading ? 'Sending...' : 'Send'}
-            </Button>
-          </div>
+          ))}
+
+          {messages?.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <h2 className="text-xl font-semibold mb-2">
+                Start a conversation
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Choose a model below and send your first message.
+              </p>
+            </div>
+          )}
         </div>
-      </form>
+
+        <div className="border-t bg-white p-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="flex items-center gap-2">
+              <ModelSelector
+                selectedModel={selectedModel}
+                onModelChange={setSelectedModel}
+                userTier={userTier}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Input
+                className="flex-1"
+                value={input}
+                placeholder="Type your message..."
+                onChange={(e) => setInput(e.target.value)}
+                disabled={isLoading}
+              />
+              <Button type="submit" disabled={isLoading || !input.trim()}>
+                {isLoading ? 'Sending...' : 'Send'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   )
 }
