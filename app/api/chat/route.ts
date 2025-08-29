@@ -81,7 +81,6 @@ export async function POST(req: Request) {
             model,
             actualTokens: result.usage.totalTokens,
             tools,
-            threadId,
           }
         )
       },

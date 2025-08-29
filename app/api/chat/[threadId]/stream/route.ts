@@ -99,7 +99,7 @@ export async function POST(
         if (chunk.type === 'text-delta') {
           // Update streaming content in Convex
           await convex.mutation(api.messages.updateStreaming, {
-            messageId: assistantMessage,
+            messageId: assistantMessage.id,
             content: chunk.textDelta,
             isComplete: false,
           })
@@ -108,10 +108,21 @@ export async function POST(
       onFinish: async (result) => {
         // Mark message as complete
         await convex.mutation(api.messages.updateStreaming, {
-          messageId: assistantMessage,
+          messageId: assistantMessage.id,
           content: result.text,
           isComplete: true,
-          finishReason: result.finishReason,
+          finishReason: (() => {
+            switch (result.finishReason) {
+              case 'length':
+              case 'stop':
+              case 'error':
+                return result.finishReason
+              case 'content-filter':
+                return 'content_filter'
+              default:
+                return 'stop'
+            }
+          })(),
           usage: result.usage,
         })
 
@@ -135,7 +146,6 @@ export async function POST(
             model,
             actualTokens: result.usage.totalTokens,
             tools: ['web_search_preview'],
-            threadId,
           }
         )
       },
