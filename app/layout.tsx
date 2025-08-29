@@ -1,8 +1,8 @@
-import { Toaster } from '@/components/ui/sonner'
 import type { Metadata } from 'next'
 import { ThemeProvider } from '../components/provider'
 import './globals.css'
 import { Analytics } from '@vercel/analytics/next'
+import { Toaster } from 'sonner'
 export const metadata: Metadata = {
   title: 'Next.js Starter Kit - Launch Your SAAS',
   description:

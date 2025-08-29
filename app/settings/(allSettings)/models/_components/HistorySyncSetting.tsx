@@ -3,6 +3,19 @@
 
 import React, { useState } from 'react' // Assuming you have a toast component from shadcn
 import { Input } from '@/components/ui/input'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
+import { DataDisplayCard } from './dispaly-card'
+import { toast } from 'sonner'
 
 // --- DUMMY DATA ---
 interface SyncStatus {
@@ -33,7 +46,6 @@ const DUMMY_LOCAL_HISTORY: LocalHistory = {
 // --- END DUMMY DATA ---
 
 export const HistorySyncSettings: React.FC = () => {
-  const { toast } = useToast()
   const [syncEnabled, setSyncEnabled] = useState(DUMMY_SYNC_STATUS.isEnabled)
   const [exportFileName, setExportFileName] = useState('t3_chat_export')
   const [isExporting, setIsExporting] = useState(false)
@@ -42,15 +54,9 @@ export const HistorySyncSettings: React.FC = () => {
   const handleSyncToggle = (checked: boolean) => {
     setSyncEnabled(checked)
     if (checked) {
-      toast({
-        title: 'Sync Enabled',
-        description: 'Your chat history will now sync automatically.',
-      })
+      toast.success('Your chat history will now sync automatically')
     } else {
-      toast({
-        title: 'Sync Disabled',
-        description: 'Your chat history will no longer sync.',
-      })
+      toast.success('Your chat history will no longer sync.')
     }
     // In a real app, you'd call a Convex mutation here to update user settings
     // await convex.mutation('user.setSyncSetting', { enabled: checked });
@@ -58,35 +64,23 @@ export const HistorySyncSettings: React.FC = () => {
 
   const handleExportLocalHistory = async () => {
     setIsExporting(true)
-    toast({
-      title: 'Exporting History',
-      description: 'Preparing your local chat history for download...',
-    })
+    toast.success('Preparing your local chat history for download...')
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 2000))
     console.log(`Exporting local history to ${exportFileName}.json`)
-    toast({
-      title: 'Export Complete',
-      description: `Your local history has been exported as "${exportFileName}.json".`,
-      variant: 'success', // Assuming you have a 'success' variant for toast
-    })
+    toast.success(
+      `Your local history has been exported as "${exportFileName}.json".`
+    )
     setIsExporting(false)
     // In a real app, this would trigger a download
   }
 
   const handleSyncNow = async () => {
-    toast({
-      title: 'Syncing History',
-      description: 'Initiating a manual sync of your chat history...',
-    })
+    toast('Initiating a manual sync of your chat history...')
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 2000))
     console.log('Manually syncing history...')
-    toast({
-      title: 'Sync Complete',
-      description: 'Your chat history has been synced successfully.',
-      variant: 'success',
-    })
+    toast('Your chat history has been synced successfully.')
     // In a real app, you'd call a Convex mutation to trigger a sync
   }
 
@@ -148,10 +142,7 @@ export const HistorySyncSettings: React.FC = () => {
           dataLabel="messages"
           buttonText="View Synced History"
           onButtonClick={() => {
-            toast({
-              title: 'Not Implemented',
-              description: 'Viewing synced history is not yet implemented.',
-            })
+            toast('Viewing synced history is not yet implemented.')
           }}
         />
 
@@ -163,10 +154,7 @@ export const HistorySyncSettings: React.FC = () => {
           dataLabel="messages"
           buttonText="Clear Local History"
           onButtonClick={() => {
-            toast({
-              title: 'Not Implemented',
-              description: 'Clearing local history is not yet implemented.',
-            })
+            toast('Clearing local history is not yet implemented.')
           }}
         />
       </div>

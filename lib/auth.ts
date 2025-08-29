@@ -6,6 +6,15 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { nextCookies } from 'better-auth/next-js'
 import { syncUserToConvex } from './convex-sync'
+import {
+  anonymous,
+  emailOTP,
+  jwt,
+  magicLink,
+  organization,
+} from 'better-auth/plugins'
+import { resend } from './resend'
+import MagicLinkEmail from '@/emails/magicLink'
 
 // Utility function to safely parse dates
 function safeParseDate(value: string | Date | null | undefined): Date | null {
@@ -69,6 +78,37 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    organization(),
+    jwt(),
+    magicLink({
+      sendMagicLink: async ({ email, token, url }) => {
+        console.log({
+          email,
+          token,
+          url,
+        })
+
+        await resend.emails.send({
+          from: 'Better-chat <no-reply@abhishekgusain.com>',
+          to: email,
+          subject: 'Your magic link',
+          react: MagicLinkEmail({ url }),
+        })
+      },
+    }),
+    anonymous({
+      onLinkAccount: async ({ anonymousUser, newUser }) => {
+        await db
+          .update(schema.thread)
+          .set({ userId: UserId(newUser.user.id) })
+          .where(eq(schema.thread.userId, UserId(anonymousUser.user.id)))
+
+        await db
+          .update(schema.message)
+          .set({ userId: UserId(newUser.user.id) })
+          .where(eq(schema.message.userId, UserId(anonymousUser.user.id)))
+      },
+    }),
     polar({
       client: polarClient,
       createCustomerOnSignUp: true,
