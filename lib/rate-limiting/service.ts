@@ -377,36 +377,46 @@ export class RateLimitService {
    */
   static async getUserTier(userId: string): Promise<UserTier> {
     // 1. Check for temporary upgrades first
-    const tempUpgrade = await db.query.temporaryUpgrades.findFirst({
-      where: and(
-        eq(temporaryUpgrades.userId, userId),
-        gte(temporaryUpgrades.expiresAt, new Date())
-      ),
-    })
+    const tempUpgrade = await db
+      .select()
+      .from(temporaryUpgrades)
+      .where(
+        and(
+          eq(temporaryUpgrades.userId, userId),
+          gte(temporaryUpgrades.expiresAt, new Date())
+        )
+      )
+      .limit(1)
 
-    if (tempUpgrade) {
-      return tempUpgrade.tier as UserTier
+    if (tempUpgrade[0]) {
+      return tempUpgrade[0].tier as UserTier
     }
 
     // 2. Check subscription status
-    const userRecord = await db.query.user.findFirst({
-      where: eq(user.id, userId),
-      with: {
-        subscriptions: {
-          where: and(
-            eq(subscription.status, 'active'),
-            gte(subscription.currentPeriodEnd, new Date())
-          ),
-        },
-      },
-    })
+    const activeSubscription = await db
+      .select()
+      .from(subscription)
+      .where(
+        and(
+          eq(subscription.userId, userId),
+          eq(subscription.status, 'active'),
+          gte(subscription.currentPeriodEnd, new Date())
+        )
+      )
+      .limit(1)
 
-    if (userRecord?.subscriptions?.[0]) {
+    if (activeSubscription[0]) {
       return 'Pro' // Active subscription = Pro tier
     }
 
     // 3. Check if anonymous user
-    if (userRecord?.isAnonymous) {
+    const userRecord = await db
+      .select({ isAnonymous: user.isAnonymous })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1)
+
+    if (userRecord[0]?.isAnonymous) {
       return 'Anonymous'
     }
 
@@ -418,22 +428,25 @@ export class RateLimitService {
    * Get current usage with proper typing
    */
   static async getCurrentUsage(userId: string): Promise<RateLimitUsage | null> {
-    const usage = await db.query.rateLimits.findFirst({
-      where: eq(rateLimits.userId, userId),
-    })
+    const usage = await db
+      .select()
+      .from(rateLimits)
+      .where(eq(rateLimits.userId, userId))
+      .limit(1)
 
-    if (!usage) {
+    if (!usage[0]) {
       return null
     }
 
+    const record = usage[0]
     return {
-      creditsUsed: usage.creditsUsed || 0,
-      searchCallsUsed: usage.searchCallsUsed || 0,
-      researchCallsUsed: usage.researchCallsUsed || 0,
-      fileUploadsUsed: usage.fileUploadsUsed || 0,
-      currentTier: usage.currentTier as UserTier,
-      periodStart: usage.periodStart,
-      resetsAt: usage.resetsAt,
+      creditsUsed: record.creditsUsed || 0,
+      searchCallsUsed: record.searchCallsUsed || 0,
+      researchCallsUsed: record.researchCallsUsed || 0,
+      fileUploadsUsed: record.fileUploadsUsed || 0,
+      currentTier: record.currentTier as UserTier,
+      periodStart: record.periodStart,
+      resetsAt: record.resetsAt,
     }
   }
 
@@ -504,9 +517,9 @@ export class RateLimitService {
         usageType,
         creditsConsumed,
         modelUsed: metadata?.model,
+        tokensUsed: metadata?.actualTokens,
         success,
-        errorMessage: metadata?.errorMessage,
-        metadata: metadata ? JSON.stringify(metadata) : null,
+        threadId: metadata?.threadId,
         sessionId: metadata?.sessionId,
         createdAt: new Date(),
       })
