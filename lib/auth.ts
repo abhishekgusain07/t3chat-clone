@@ -1,5 +1,16 @@
 import { db } from '@/db/drizzle'
-import { account, session, subscription, user, verification } from '@/db/schema'
+import {
+  account,
+  session,
+  subscription,
+  user,
+  verification,
+  rateLimits,
+  usageLogs,
+} from '@/db/schema'
+import { ConvexHttpClient } from 'convex/browser'
+import { api } from '@/convex/_generated/api'
+import { eq } from 'drizzle-orm'
 import { checkout, polar, portal, usage, webhooks } from '@polar-sh/better-auth'
 import { Polar } from '@polar-sh/sdk'
 import { betterAuth } from 'better-auth'
@@ -98,15 +109,39 @@ export const auth = betterAuth({
     }),
     anonymous({
       onLinkAccount: async ({ anonymousUser, newUser }) => {
-        await db
-          .update(schema.thread)
-          .set({ userId: UserId(newUser.user.id) })
-          .where(eq(schema.thread.userId, UserId(anonymousUser.user.id)))
+        console.log(
+          `🔗 Linking anonymous user ${anonymousUser.user.id} to authenticated user ${newUser.user.id}`
+        )
 
-        await db
-          .update(schema.message)
-          .set({ userId: UserId(newUser.user.id) })
-          .where(eq(schema.message.userId, UserId(anonymousUser.user.id)))
+        try {
+          // Transfer Convex data from anonymous to authenticated user
+          const convexClient = new ConvexHttpClient(
+            process.env.NEXT_PUBLIC_CONVEX_URL!
+          )
+
+          await convexClient.mutation(api.auth.linkAnonymousAccount, {
+            anonymousUserId: anonymousUser.user.id,
+            authenticatedUserId: newUser.user.id,
+          })
+
+          // Transfer PostgreSQL data (rate limits, usage logs)
+          await db
+            .update(rateLimits)
+            .set({ userId: newUser.user.id })
+            .where(eq(rateLimits.userId, anonymousUser.user.id))
+
+          await db
+            .update(usageLogs)
+            .set({ userId: newUser.user.id })
+            .where(eq(usageLogs.userId, anonymousUser.user.id))
+
+          console.log(
+            `✅ Successfully linked anonymous account to authenticated user`
+          )
+        } catch (error) {
+          console.error(`❌ Failed to link anonymous account:`, error)
+          // Don't throw - allow the auth process to continue
+        }
       },
     }),
     polar({
