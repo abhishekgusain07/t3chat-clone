@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ThemeProvider } from '../components/provider'
+import { ThemeProvider, AppProviders } from '../components/provider'
 import './globals.css'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
@@ -43,14 +43,16 @@ export default function RootLayout({
           forcedTheme="light"
           disableTransitionOnChange
         >
-          <div
-            className="max-h-screen w-full overflow-y-auto"
-            style={{ scrollbarGutter: 'stable' }}
-          >
-            {children}
-          </div>
-          <Toaster />
-          <Analytics />
+          <AppProviders>
+            <div
+              className="max-h-screen w-full overflow-y-auto"
+              style={{ scrollbarGutter: 'stable' }}
+            >
+              {children}
+            </div>
+            <Toaster />
+            <Analytics />
+          </AppProviders>
         </ThemeProvider>
       </body>
     </html>

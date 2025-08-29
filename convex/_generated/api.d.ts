@@ -13,6 +13,11 @@ import type {
   FilterApi,
   FunctionReference,
 } from 'convex/server'
+import type * as auth from '../auth.js'
+import type * as availableModels from '../availableModels.js'
+import type * as messages from '../messages.js'
+import type * as threads from '../threads.js'
+import type * as userPreferences from '../userPreferences.js'
 import type * as users from '../users.js'
 
 /**
@@ -24,6 +29,11 @@ import type * as users from '../users.js'
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth
+  availableModels: typeof availableModels
+  messages: typeof messages
+  threads: typeof threads
+  userPreferences: typeof userPreferences
   users: typeof users
 }>
 export declare const api: FilterApi<
