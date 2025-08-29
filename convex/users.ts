@@ -43,7 +43,46 @@ export const syncUser = mutation({
         authUpdatedAt: args.authUpdatedAt,
       })
 
-      console.log(`Created new user in Convex: ${args.email}`)
+      // Initialize user preferences with sensible defaults (similar to zeronsh)
+      await ctx.db.insert('userPreferences', {
+        userId: args.authUserId, // References the Better Auth user ID
+
+        // Model preferences (from zeronsh defaults)
+        currentlySelectedModel: 'gpt-4o-mini',
+        enabledModels: [
+          'claude-4-sonnet',
+          'gpt-4o',
+          'gpt-4o-mini',
+          'gemini-2.5-flash',
+          'gemini-2.5-pro',
+          'deepseek-v3.1',
+        ],
+
+        // Behavior options
+        disableExternalLinkWarning: false,
+        invertSendBehavior: false, // Enter to send vs Shift+Enter
+
+        // Visual options
+        boringTheme: false, // Allow pink theme
+        hidePersonalInfo: false,
+        disableThematicBreaks: false,
+        statsForNerds: false, // Hide token counts by default
+
+        // Keyboard shortcuts
+        shortcuts: {
+          search: 'cmd+k',
+          newChat: 'cmd+shift+o',
+          toggleSidebar: 'cmd+b',
+        },
+
+        // Other preferences
+        emailReceipts: true,
+
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+
+      console.log(`Created new user in Convex with preferences: ${args.email}`)
       return { success: true, action: 'created', userId }
     }
   },
