@@ -106,7 +106,8 @@ export default defineSchema({
     role: v.union(
       v.literal('user'),
       v.literal('assistant'),
-      v.literal('system')
+      v.literal('system'),
+      v.literal('tool') // For tool responses
     ),
 
     // Content storage for streaming
@@ -137,6 +138,31 @@ export default defineSchema({
     ),
 
     model: v.optional(v.string()), // Model used for this message
+
+    // File attachments
+    attachments: v.optional(
+      v.array(
+        v.object({
+          type: v.literal('file'),
+          url: v.string(),
+          filename: v.string(),
+          mediaType: v.string(),
+          size: v.optional(v.number()),
+        })
+      )
+    ),
+
+    // Tool usage
+    toolCalls: v.optional(
+      v.array(
+        v.object({
+          toolName: v.string(),
+          arguments: v.any(),
+          result: v.optional(v.any()),
+        })
+      )
+    ),
+
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -192,37 +218,7 @@ export default defineSchema({
     .index('by_status', ['status'])
     .index('by_user_active', ['userId', 'status']),
 
-  // Rate limiting
-  rateLimits: defineTable({
-    userId: v.string(),
-    convexSessionId: v.string(),
-
-    // Tier-based limits
-    standard: v.object({
-      remaining: v.number(),
-      used: v.number(),
-      max: v.number(), // 20 for free, more for paid
-    }),
-    premium: v.object({
-      remaining: v.number(),
-      used: v.number(),
-      max: v.number(), // 1500 for pro tier
-    }),
-    purchased: v.object({
-      remaining: v.number(),
-      used: v.number(),
-      max: v.number(), // Additional credits
-    }),
-
-    // Reset timing
-    resetsAt: v.string(), // ISO 8601
-    periodStart: v.number(),
-
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index('by_user', ['userId'])
-    .index('by_session', ['convexSessionId']),
+  // Note: Rate limiting moved to PostgreSQL for consistency with auth/billing data
 
   // WebSocket sessions (for Convex real-time, not AI streaming)
   sessions: defineTable({
@@ -245,38 +241,7 @@ export default defineSchema({
     .index('by_user', ['userId'])
     .index('by_expiry', ['expiresAt']),
 
-  // User subscriptions
-  subscriptions: defineTable({
-    userId: v.string(),
-    tier: v.union(v.literal('Free'), v.literal('Pro'), v.literal('Enterprise')),
-
-    // Subscription details
-    status: v.union(
-      v.literal('active'),
-      v.literal('trialing'),
-      v.literal('cancelled'),
-      v.literal('expired')
-    ),
-
-    // Payment info
-    stripeCustomerId: v.optional(v.string()),
-    stripeSubscriptionId: v.optional(v.string()),
-    stripePriceId: v.optional(v.string()), // $8/month price ID
-
-    // Billing cycle
-    currentPeriodStart: v.number(),
-    currentPeriodEnd: v.number(),
-    cancelAtPeriodEnd: v.boolean(),
-
-    // Credit tracking
-    additionalCredits: v.number(), // $8 per 100 credits
-    creditsUsedThisPeriod: v.number(),
-
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index('by_user', ['userId'])
-    .index('by_stripe_customer', ['stripeCustomerId']),
+  // Note: User subscriptions handled by Polar and stored in PostgreSQL
 
   // Message history export/import
   messageHistory: defineTable({
@@ -347,31 +312,36 @@ export default defineSchema({
     .index('by_tier', ['requiredTier'])
     .index('by_enabled', ['enabled']),
 
-  // API Keys (Pro feature)
-  apiKeys: defineTable({
+  // Note: API Keys (Pro feature) moved to PostgreSQL for secure encrypted storage
+
+  // Real-time presence for typing indicators and online status
+  presence: defineTable({
     userId: v.string(),
-    keyId: v.string(),
+    threadId: v.optional(v.string()), // Thread-specific presence
 
-    // Encrypted storage
-    encryptedKey: v.string(), // Encrypted API key
-    keyHint: v.string(), // Last 4 characters for display
+    // Typing status
+    isTyping: v.boolean(),
+    lastTypingAt: v.optional(v.number()),
 
-    // Provider info
-    provider: v.string(), // "openai", "anthropic", etc.
-    modelAccess: v.array(v.string()), // Which models this key enables
+    // Online status
+    status: v.union(
+      v.literal('online'),
+      v.literal('idle'),
+      v.literal('offline')
+    ),
+    lastSeenAt: v.number(),
 
-    // Validation
-    isValid: v.boolean(),
-    lastValidatedAt: v.optional(v.number()),
-    validationError: v.optional(v.string()),
+    // Session info
+    sessionId: v.string(),
 
-    // Usage tracking
-    requestCount: v.number(),
-    lastUsedAt: v.optional(v.number()),
+    // Auto-cleanup
+    expiresAt: v.number(), // Auto-expire old presence records
 
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index('by_user', ['userId'])
-    .index('by_key_id', ['keyId']),
+    .index('by_thread', ['threadId'])
+    .index('by_session', ['sessionId'])
+    .index('by_expiry', ['expiresAt']),
 })
