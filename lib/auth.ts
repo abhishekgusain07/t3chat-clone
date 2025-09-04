@@ -7,6 +7,10 @@ import {
   verification,
   rateLimits,
   usageLogs,
+  jwks,
+  organization as organizationTable,
+  member,
+  invitation,
 } from '@/db/schema'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '@/convex/_generated/api'
@@ -54,6 +58,10 @@ export const auth = betterAuth({
       account,
       verification,
       subscription,
+      jwks,
+      organization: organizationTable,
+      member,
+      invitation,
     },
   }),
   socialProviders: {
