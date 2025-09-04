@@ -10,10 +10,12 @@ import { StreamingMessage } from '@/components/chat/StreamingMessage'
 import { useParams } from 'next/navigation'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
+import { useSession } from '@/components/auth/AnonymousProvider'
 
 export default function ChatPage() {
   const params = useParams()
   const threadId = params.threadId as string
+  const { isSessionReady, sessionError, refreshSession } = useSession()
 
   const convex = useConvex()
   const [input, setInput] = useState('')
@@ -22,27 +24,82 @@ export default function ChatPage() {
   const [userTier, setUserTier] = useState<
     'Anonymous' | 'Free' | 'Pro' | 'Enterprise'
   >('Free')
+  const [tierFetchAttempted, setTierFetchAttempted] = useState(false)
 
   const createThread = useMutation(api.threads.create)
   const createMessage = useMutation(api.messages.create)
   const messages = useQuery(api.messages.getByThread, { threadId })
   const userPreferences = useQuery(api.userPreferences.get)
 
-  // Fetch user tier
+  // Fetch user tier after session is ready
   useEffect(() => {
-    const fetchUserTier = async () => {
+    const fetchUserTier = async (retryCount = 0) => {
+      const maxRetries = 3
+
       try {
+        console.log(`🔍 Fetching user tier (attempt ${retryCount + 1})...`)
+
         const response = await fetch('/api/rate-limits')
         if (response.ok) {
           const data = await response.json()
           setUserTier(data.tier)
+          setTierFetchAttempted(true)
+          console.log('✅ User tier fetched successfully:', data.tier)
+        } else {
+          const errorData = await response.json().catch(() => ({
+            error: 'Unknown error',
+            retry: false,
+          }))
+
+          console.warn('⚠️ Failed to fetch user tier:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData.error,
+            code: errorData.code,
+          })
+
+          if (
+            response.status === 401 &&
+            errorData.retry &&
+            retryCount < maxRetries
+          ) {
+            // Session may still be syncing, retry with structured delay
+            const delay = Math.min(2000 * Math.pow(1.5, retryCount), 10000) // Max 10s delay
+            console.log(
+              `🔄 Session invalid, retrying in ${delay}ms... (${errorData.details})`
+            )
+            setTimeout(() => fetchUserTier(retryCount + 1), delay)
+            return
+          }
+
+          // Default to Anonymous tier if auth fails
+          console.log(
+            '🔄 Setting default tier to Anonymous due to auth failure'
+          )
+          setUserTier('Anonymous')
+          setTierFetchAttempted(true)
         }
       } catch (error) {
-        console.error('Failed to fetch user tier:', error)
+        console.error('❌ Failed to fetch user tier:', error)
+        if (retryCount < maxRetries) {
+          const delay = Math.min(1000 * Math.pow(2, retryCount), 8000)
+          console.log(`🔄 Network error, retrying in ${delay}ms...`)
+          setTimeout(() => fetchUserTier(retryCount + 1), delay)
+          return
+        }
+        // Fallback to Anonymous tier on error
+        console.warn('❌ All retries exhausted, defaulting to Anonymous tier')
+        setUserTier('Anonymous')
+        setTierFetchAttempted(true)
       }
     }
-    fetchUserTier()
-  }, [])
+
+    // Only fetch tier after session is ready
+    if (isSessionReady && !tierFetchAttempted) {
+      // Add small delay to allow session to fully sync
+      setTimeout(() => fetchUserTier(), 500)
+    }
+  }, [isSessionReady, tierFetchAttempted])
 
   // Update selected model from preferences
   useEffect(() => {
@@ -55,33 +112,105 @@ export default function ChatPage() {
     e.preventDefault()
     if (!input.trim() || isLoading) return
 
+    // Wait for session to be ready
+    if (!isSessionReady) {
+      console.log('⏳ Waiting for session to be ready...')
+      alert('Please wait, establishing connection...')
+      return
+    }
+
     const userMessage = input.trim()
     setIsLoading(true)
 
     try {
-      // Check rate limits before processing
-      const rateLimitCheck = await fetch('/api/rate-limits/check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'message',
-          metadata: {
-            model: selectedModel,
-            estimatedTokens: userMessage.length / 4,
-            tools: ['web_search_preview'],
-          },
-        }),
-      })
+      // Check rate limits before processing with session-aware retry
+      let rateLimitAllowed = true
+      let rateLimitReason = ''
 
-      if (!rateLimitCheck.ok) {
-        const errorData = await rateLimitCheck.json()
-        alert(`Rate limit exceeded: ${errorData.error}`)
-        return
+      const checkRateLimitWithRetry = async (
+        retryCount = 0
+      ): Promise<boolean> => {
+        try {
+          console.log(`🔍 Checking rate limits (attempt ${retryCount + 1})...`)
+
+          const rateLimitCheck = await fetch('/api/rate-limits/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'message',
+              metadata: {
+                model: selectedModel,
+                estimatedTokens: userMessage.length / 4,
+                tools: ['web_search_preview'],
+              },
+            }),
+          })
+
+          if (rateLimitCheck.ok) {
+            const rateLimitResult = await rateLimitCheck.json()
+            if (!rateLimitResult.allowed) {
+              rateLimitAllowed = false
+              rateLimitReason = rateLimitResult.reason || 'Rate limit exceeded'
+            }
+            return true
+          }
+
+          if (rateLimitCheck.status === 401) {
+            const errorData = await rateLimitCheck.json().catch(() => ({
+              error: 'Unknown error',
+              retry: false,
+            }))
+
+            if (errorData.retry && retryCount < 2) {
+              console.log(
+                `🔄 401 error during rate limit check, refreshing session and retrying...`
+              )
+              console.log(`   Details: ${errorData.details}`)
+              await refreshSession()
+              // Wait for session to sync then retry
+              await new Promise((resolve) => setTimeout(resolve, 1500))
+              return checkRateLimitWithRetry(retryCount + 1)
+            } else {
+              console.warn(
+                '⚠️ Rate limit check failed - session issue not retryable:',
+                {
+                  status: rateLimitCheck.status,
+                  error: errorData.error,
+                  code: errorData.code,
+                }
+              )
+              // Continue with anonymous limits for better UX
+              return true
+            }
+          } else {
+            const errorData = await rateLimitCheck
+              .json()
+              .catch(() => ({ error: 'Unknown error' }))
+            console.warn('⚠️ Rate limit check failed:', {
+              status: rateLimitCheck.status,
+              statusText: rateLimitCheck.statusText,
+              error: errorData.error,
+            })
+            // Continue with anonymous limits for better UX
+            return true
+          }
+        } catch (error) {
+          console.error('❌ Rate limit check error:', error)
+          if (retryCount < 1) {
+            console.log('🔄 Retrying rate limit check...')
+            await new Promise((resolve) => setTimeout(resolve, 1000))
+            return checkRateLimitWithRetry(retryCount + 1)
+          }
+          // Continue without rate limiting for better UX
+          return true
+        }
       }
 
-      const rateLimitResult = await rateLimitCheck.json()
-      if (!rateLimitResult.allowed) {
-        alert(`Cannot send message: ${rateLimitResult.reason}`)
+      const rateLimitCheckSuccess = await checkRateLimitWithRetry()
+      if (!rateLimitCheckSuccess || !rateLimitAllowed) {
+        alert(
+          `Cannot send message: ${rateLimitReason || 'Rate limit check failed'}`
+        )
         return
       }
 
@@ -208,21 +337,48 @@ export default function ChatPage() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {(messages || []).map((message) => (
-          <StreamingMessage
-            key={message._id}
-            message={message}
-            showStats={userPreferences?.statsForNerds}
-          />
-        ))}
-
-        {messages?.length === 0 && (
+        {!isSessionReady ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <h2 className="text-xl font-semibold mb-2">Start a conversation</h2>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+            <h2 className="text-xl font-semibold mb-2">
+              Establishing connection...
+            </h2>
             <p className="text-gray-600 mb-4">
-              Send your first message to begin chatting.
+              Setting up your anonymous session for secure chatting.
             </p>
+            {sessionError && (
+              <div className="text-red-600 text-sm mt-2">
+                {sessionError}
+                <button
+                  onClick={refreshSession}
+                  className="ml-2 underline hover:no-underline"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
           </div>
+        ) : (
+          <>
+            {(messages || []).map((message) => (
+              <StreamingMessage
+                key={message._id}
+                message={message}
+                showStats={userPreferences?.statsForNerds}
+              />
+            ))}
+
+            {messages?.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <h2 className="text-xl font-semibold mb-2">
+                  Start a conversation
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  Send your first message to begin chatting.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -232,12 +388,23 @@ export default function ChatPage() {
           <Input
             className="flex-1"
             value={input}
-            placeholder="Type your message..."
+            placeholder={
+              !isSessionReady
+                ? 'Establishing connection...'
+                : 'Type your message...'
+            }
             onChange={(e) => setInput(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || !isSessionReady}
           />
-          <Button type="submit" disabled={isLoading || !input.trim()}>
-            {isLoading ? 'Sending...' : 'Send'}
+          <Button
+            type="submit"
+            disabled={isLoading || !input.trim() || !isSessionReady}
+          >
+            {!isSessionReady
+              ? 'Connecting...'
+              : isLoading
+                ? 'Sending...'
+                : 'Send'}
           </Button>
         </form>
       </div>
