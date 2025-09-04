@@ -54,48 +54,56 @@ export function AnonymousProvider({ children }: AnonymousProviderProps) {
     return false
   }
 
-  const createAnonymousSession = async (maxRetries = 3): Promise<boolean> => {
+  const checkSessionStatus = async (maxRetries = 3): Promise<boolean> => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         console.log(
-          `🔄 Creating anonymous session (attempt ${attempt}/${maxRetries})`
+          `🔄 Checking session status (attempt ${attempt}/${maxRetries})`
         )
 
-        const result = await authClient.signIn.anonymous()
+        // Check if session exists - server will create anonymous session if needed
+        const session = await authClient.getSession()
 
-        if (result?.data?.user) {
-          console.log('✅ Anonymous session created:', {
-            userId: result.data.user.id,
-            isAnonymous: result.data.user.isAnonymous,
+        if (session?.data?.user?.id) {
+          console.log('✅ Session verified:', {
+            userId: session.data.user.id,
+            isAnonymous: session.data.user.isAnonymous,
           })
+          return true
+        }
 
-          // Verify session persistence with retries
-          const isVerified = await verifySession(5)
-          if (isVerified) {
-            return true
+        // Try to trigger session creation by calling a protected endpoint
+        // This will cause the server to create an anonymous session
+        console.log('🔄 No session found, triggering server-side creation...')
+
+        try {
+          const response = await fetch('/api/rate-limits')
+          if (response.ok || response.status === 401) {
+            // Even a 401 response means the server processed the request
+            // Wait a moment for session to be created, then check again
+            await sleep(500)
+
+            const sessionCheck = await authClient.getSession()
+            if (sessionCheck?.data?.user?.id) {
+              console.log('✅ Session created via server:', {
+                userId: sessionCheck.data.user.id,
+                isAnonymous: sessionCheck.data.user.isAnonymous,
+              })
+              return true
+            }
           }
-
-          console.warn('⚠️ Session created but verification failed')
-        } else if (result?.error) {
-          console.error(`❌ Anonymous session creation failed:`, result.error)
-        } else {
-          console.warn(
-            '⚠️ Anonymous session creation returned no data:',
-            result
-          )
+        } catch (fetchError) {
+          console.warn('⚠️ Server session trigger failed:', fetchError)
         }
 
         // Exponential backoff
         if (attempt < maxRetries) {
           const delay = Math.pow(2, attempt) * 1000
-          console.log(`⏳ Retrying in ${delay}ms...`)
+          console.log(`⏳ Retrying session check in ${delay}ms...`)
           await sleep(delay)
         }
       } catch (error) {
-        console.error(
-          `❌ Error creating anonymous session (attempt ${attempt}):`,
-          error
-        )
+        console.error(`❌ Error checking session (attempt ${attempt}):`, error)
         if (attempt < maxRetries) {
           await sleep(Math.pow(2, attempt) * 1000)
         }
@@ -120,20 +128,20 @@ export function AnonymousProvider({ children }: AnonymousProviderProps) {
         return
       }
 
-      console.log('🔄 No existing session, creating anonymous session...')
+      console.log('🔄 No existing session, checking/creating session...')
 
-      // Create anonymous session with retries
-      const success = await createAnonymousSession()
+      // Check session status and trigger server-side creation if needed
+      const success = await checkSessionStatus()
 
       if (success) {
         setIsSessionReady(true)
-        console.log('🎉 Anonymous session initialization complete')
+        console.log('🎉 Session initialization complete')
       } else {
         const error =
-          'Failed to create anonymous session after multiple attempts'
+          'Failed to establish session after multiple attempts. The server-side session creation may be having issues.'
         console.error('❌', error)
         setSessionError(error)
-        // Set ready to true anyway to not block the app
+        // Set ready to true anyway to not block the app, but with error state
         setIsSessionReady(true)
       }
     } catch (error) {
@@ -147,7 +155,9 @@ export function AnonymousProvider({ children }: AnonymousProviderProps) {
   }
 
   const refreshSession = async () => {
+    console.log('🔄 Refreshing session...')
     setIsSessionReady(false)
+    setSessionError(null)
     await initializeSession()
   }
 

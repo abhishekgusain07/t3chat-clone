@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { RateLimitService } from '@/lib/rate-limiting/service'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { getOrCreateSession } from '@/lib/session-utils'
 import { z } from 'zod'
 
 const checkRequestSchema = z.object({
@@ -18,38 +17,35 @@ const checkRequestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    })
+    // Get or create anonymous session automatically
+    const sessionResult = await getOrCreateSession()
 
-    console.log('🔍 Rate limit check - session debug:', {
-      hasSession: !!session,
-      hasUser: !!session?.user,
-      userId: session?.user?.id,
-      isAnonymous: session?.user?.isAnonymous,
-      sessionKeys: session ? Object.keys(session) : [],
-      userKeys: session?.user ? Object.keys(session.user) : [],
-    })
-
-    // Handle case where session exists but user is not properly populated
-    if (!session?.user?.id) {
-      console.warn('⚠️ No valid user session found for rate limiting', {
-        sessionExists: !!session,
-        userExists: !!session?.user,
-        hasUserId: !!session?.user?.id,
-      })
+    if (!sessionResult.success || !sessionResult.session?.user?.id) {
+      console.warn(
+        '⚠️ Failed to establish session for rate limit check:',
+        sessionResult.error
+      )
 
       return NextResponse.json(
         {
-          error: 'Session not found or invalid',
-          code: 'SESSION_INVALID',
-          details:
-            'Anonymous session may still be initializing. Please try again in a moment.',
+          error: 'Failed to establish session',
+          code: 'SESSION_CREATION_FAILED',
+          details: sessionResult.error || 'Could not create anonymous session',
           retry: true,
         },
         { status: 401 }
       )
     }
+
+    const session = sessionResult.session
+
+    console.log('🔍 Rate limit check - session established:', {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userId: session?.user?.id,
+      isAnonymous: (session?.user as any)?.isAnonymous ?? false,
+      wasNewSession: sessionResult.isNewSession,
+    })
 
     const body = await req.json()
     const validatedBody = checkRequestSchema.parse(body)

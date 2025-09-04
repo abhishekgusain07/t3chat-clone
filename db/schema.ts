@@ -10,8 +10,8 @@ import {
 // Better Auth Tables
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
+  name: text('name'), // Nullable for anonymous users
+  email: text('email').unique(), // Nullable for anonymous users, but still unique when provided
   emailVerified: boolean('emailVerified').notNull().default(false),
   image: text('image'),
   isAnonymous: boolean('is_anonymous'),
