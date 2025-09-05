@@ -7,7 +7,7 @@ import { useConvex, useMutation, useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { ModelSelector } from '@/components/chat/ModelSelector'
 import { StreamingMessage } from '@/components/chat/StreamingMessage'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { useSession } from '@/components/auth/AnonymousProvider'
@@ -18,7 +18,6 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ threadId }: ChatInterfaceProps) {
-  const params = useParams()
   const router = useRouter()
   const { isSessionReady, sessionError, refreshSession } = useSession()
 
@@ -225,9 +224,18 @@ export default function ChatInterface({ threadId }: ChatInterfaceProps) {
       setInput('')
 
       // Create thread if it doesn't exist
-      const thread = await convex.query(api.threads.getById, {
-        threadId: actualThreadId!,
-      })
+      let thread = null
+      try {
+        thread = await convex.query(api.threads.getById, {
+          threadId: actualThreadId!,
+        })
+      } catch (error) {
+        console.log(
+          'Thread not found or not accessible, will create new one:',
+          error
+        )
+      }
+
       if (!thread) {
         await createThread({
           threadId: actualThreadId!,

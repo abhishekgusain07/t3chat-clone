@@ -78,7 +78,7 @@ export const getById = query({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) {
-      throw new Error('Unauthorized')
+      return null
     }
 
     const user = await ctx.db
@@ -87,7 +87,7 @@ export const getById = query({
       .first()
 
     if (!user) {
-      throw new Error('User not found')
+      return null
     }
 
     const thread = await ctx.db
