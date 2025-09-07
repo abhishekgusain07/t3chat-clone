@@ -1,5 +1,6 @@
 import { auth } from './auth'
 import { headers } from 'next/headers'
+import { syncUserToConvex } from './convex-sync'
 
 /**
  * Gets or creates a session for the current request
@@ -33,10 +34,38 @@ export async function getOrCreateSession() {
     })
 
     if (anonymousResult?.response?.user) {
+      const user = anonymousResult.response.user
       console.log('✅ Anonymous session created:', {
-        userId: anonymousResult.response.user.id,
-        isAnonymous: (anonymousResult.response.user as any).isAnonymous ?? true,
+        userId: user.id,
+        isAnonymous: (user as { isAnonymous?: boolean }).isAnonymous ?? true,
       })
+
+      // Sync the new anonymous user to Convex
+      try {
+        console.log('🔄 Syncing new anonymous user to Convex...')
+        const syncResult = await syncUserToConvex({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          image: user.image,
+          isAnonymous: true,
+          createdAt: new Date(user.createdAt),
+          updatedAt: new Date(user.updatedAt),
+        })
+
+        if (syncResult) {
+          console.log(
+            `✅ Anonymous user synced to Convex: ${syncResult.action}`
+          )
+        } else {
+          console.error('❌ Failed to sync anonymous user to Convex')
+          // Don't fail the session creation, just log the error
+        }
+      } catch (error) {
+        console.error('❌ Error syncing anonymous user to Convex:', error)
+        // Don't fail the session creation, just log the error
+      }
 
       // Return the session data in the same format as getSession
       return {

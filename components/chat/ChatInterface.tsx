@@ -223,6 +223,17 @@ export default function ChatInterface({ threadId }: ChatInterfaceProps) {
 
       setInput('')
 
+      // Ensure user exists in Convex before creating thread
+      try {
+        // This will automatically create the user if they don't exist
+        await fetch('/api/ensure-user-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
+      } catch (error) {
+        console.warn('Could not ensure user sync, continuing anyway:', error)
+      }
+
       // Create thread if it doesn't exist
       let thread = null
       try {
